@@ -3,8 +3,6 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
-export const config = { api: { bodyParser: false } };
-
 async function checkAndBump(product: { id: string; subscriberCount: number; bumpThreshold: number; bumped: boolean }) {
   if (!product.bumped && product.subscriberCount >= product.bumpThreshold) {
     await prisma.product.update({
