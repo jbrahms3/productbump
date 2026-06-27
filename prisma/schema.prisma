@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  name             String
+  tagline          String
+  description      String
+  websiteUrl       String
+  logoUrl          String?
+  makerName        String
+  makerEmail       String
+  slug             String    @unique
+
+  // Stripe Connect fields
+  stripeAccountId  String?
+  stripeConnected  Boolean   @default(false)
+
+  // Subscriber / bump tracking
+  subscriberCount  Int       @default(0)
+  bumpThreshold    Int       @default(50)
+  bumped           Boolean   @default(false)  // graduated off homepage
+  bumpedAt         DateTime?
+
+  // Homepage position
+  featured         Boolean   @default(true)   // visible on homepage
+  featuredAt       DateTime  @default(now())
+
+  // Category tag
+  category         String    @default("Productivity")
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  subscriptions    Subscription[]
+}
+
+model Subscription {
+  id                    String   @id @default(cuid())
+  stripeSubscriptionId  String   @unique
+  stripeCustomerId      String
+  productId             String
+  product               Product  @relation(fields: [productId], references: [id])
+  createdAt             DateTime @default(now())
+}

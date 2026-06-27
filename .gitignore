@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# production
+build/
+
+# env files (keep .env.example, ignore real ones)
+.env.local
+.env.production
+.env.*.local
+
+# database
+prisma/dev.db
+prisma/dev.db-journal
+
+# debug logs
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# claude
+.claude/launch.json
