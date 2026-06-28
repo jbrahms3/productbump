@@ -9,6 +9,7 @@ out/
 build/
 
 # env files (keep .env.example, ignore real ones)
+.env
 .env.local
 .env.production
 .env.*.local
