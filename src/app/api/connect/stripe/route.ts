@@ -50,7 +50,10 @@ export async function POST(req: NextRequest) {
       enabled_events: ["customer.subscription.created", "customer.subscription.deleted"],
     });
   } catch (err: unknown) {
-    const message = err instanceof Stripe.errors.StripeError ? err.message : "Failed to register webhook";
+    let message = err instanceof Stripe.errors.StripeError ? err.message : "Failed to register webhook";
+    if (err instanceof Stripe.errors.StripePermissionError) {
+      message = "This key can't create webhooks. Make sure 'Webhook Endpoints' is set to Write when creating the restricted key.";
+    }
     return NextResponse.json({ error: message }, { status: 400 });
   }
 

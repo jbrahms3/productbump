@@ -15,6 +15,15 @@ export default async function ConnectStripePage({ searchParams }: Props) {
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) notFound();
 
+  // Deep link to Stripe's restricted-key creation page with the name and the two
+  // permissions we need pre-selected. The `permissions[]` params are best-effort
+  // (undocumented by Stripe) — if they're ignored, the maker can still tick the
+  // boxes manually using the instructions below.
+  const stripeKeyUrl =
+    "https://dashboard.stripe.com/apikeys/create?name=ProductBump" +
+    "&permissions[]=rak_subscription_read" +
+    "&permissions[]=rak_webhook_write";
+
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
       <div className="card p-8">
@@ -41,33 +50,45 @@ export default async function ConnectStripePage({ searchParams }: Props) {
           </div>
         ) : (
           <>
-            {/* How to get the key */}
+            {/* One-click key creation */}
+            <a
+              href={stripeKeyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-5 flex items-center justify-center gap-2 rounded-lg bg-[#635BFF] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5851e6]"
+            >
+              Create your key on Stripe
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
             <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">How to get your key</p>
-              <ol className="flex flex-col gap-2.5 text-sm text-gray-600">
-                <li className="flex gap-2">
-                  <span className="font-bold text-brand-500 shrink-0">1.</span>
-                  Go to <span className="font-medium">stripe.com/dashboard</span> → Developers → API keys
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">What this opens</p>
+              <p className="text-sm text-gray-600 mb-3">
+                The button opens Stripe&apos;s restricted-key page with the name and required permissions pre-selected. Just confirm these two are set to the right access, then click <span className="font-medium">Create key</span>:
+              </p>
+              <ul className="flex flex-col gap-1.5 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="font-mono text-xs bg-gray-200 px-1.5 py-0.5 rounded">Subscriptions</span>
+                  <span className="text-gray-400">→</span>
+                  <span className="font-medium text-gray-700">Read</span>
                 </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-brand-500 shrink-0">2.</span>
-                  Click <span className="font-medium">Create restricted key</span>
+                <li className="flex items-center gap-2">
+                  <span className="font-mono text-xs bg-gray-200 px-1.5 py-0.5 rounded">Webhook Endpoints</span>
+                  <span className="text-gray-400">→</span>
+                  <span className="font-medium text-gray-700">Write</span>
                 </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-brand-500 shrink-0">3.</span>
-                  Give it a name (e.g. "ProductBump") and set <span className="font-mono text-xs bg-gray-200 px-1 py-0.5 rounded">Subscriptions</span> to <span className="font-medium">Read</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-brand-500 shrink-0">4.</span>
-                  Copy the key (starts with <span className="font-mono text-xs bg-gray-200 px-1 py-0.5 rounded">rk_</span>) and paste it below
-                </li>
-              </ol>
+              </ul>
+              <p className="mt-3 text-sm text-gray-600">
+                Then copy the key (starts with <span className="font-mono text-xs bg-gray-200 px-1 py-0.5 rounded">rk_</span>) and paste it below.
+              </p>
             </div>
 
             <StripeKeyForm productId={productId} />
 
             <p className="mt-4 text-center text-xs text-gray-400">
-              We use this key only to register a webhook on your account.<br />
+              We use this key only to read subscriptions and register a webhook.<br />
               We never charge customers or modify your Stripe settings.
             </p>
           </>
