@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
 
   const makerStripe = new Stripe(restrictedKey, { apiVersion: "2025-02-24.acacia" });
 
-  // Validate the key has subscription read access
+  // Validate the key has charge read access
   try {
-    await makerStripe.subscriptions.list({ limit: 1 });
+    await makerStripe.charges.list({ limit: 1 });
   } catch (err: unknown) {
     const message = err instanceof Stripe.errors.StripeError ? err.message : "Invalid API key";
     return NextResponse.json({ error: `Key validation failed: ${message}` }, { status: 400 });
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   try {
     endpoint = await makerStripe.webhookEndpoints.create({
       url: webhookUrl,
-      enabled_events: ["customer.subscription.created", "customer.subscription.deleted"],
+      enabled_events: ["charge.succeeded", "charge.refunded"],
     });
   } catch (err: unknown) {
     let message = err instanceof Stripe.errors.StripeError ? err.message : "Failed to register webhook";

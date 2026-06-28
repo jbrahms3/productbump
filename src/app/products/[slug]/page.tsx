@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const progress = Math.min(
-    (product.subscriberCount / product.bumpThreshold) * 100,
+    (product.revenueAmount / product.revenueThreshold) * 100,
     100
   );
 
@@ -40,7 +41,7 @@ export default async function ProductPage({ params }: Props) {
               <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
               {product.bumped && (
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
-                  ✓ Reached 50 subscribers
+                  ✓ Reached {formatCurrency(product.revenueThreshold)}
                 </span>
               )}
             </div>
@@ -49,8 +50,8 @@ export default async function ProductPage({ params }: Props) {
           </div>
           <div className="flex shrink-0 flex-col items-center gap-1 rounded-xl border border-gray-200 p-3">
             <span className="text-2xl">▲</span>
-            <span className="text-xl font-bold">{product.subscriberCount.toLocaleString()}</span>
-            <span className="text-xs text-gray-400">subscribers</span>
+            <span className="text-xl font-bold">{formatCurrency(product.revenueAmount)}</span>
+            <span className="text-xs text-gray-400">revenue</span>
           </div>
         </div>
 
@@ -58,9 +59,9 @@ export default async function ProductPage({ params }: Props) {
         {!product.bumped && (
           <div className="border-t border-gray-100 bg-gray-50 px-6 py-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-gray-700">Progress to 50 subscribers</span>
+              <span className="font-medium text-gray-700">Progress to {formatCurrency(product.revenueThreshold)}</span>
               <span className="text-gray-500">
-                {product.subscriberCount} / {product.bumpThreshold} subscribers
+                {formatCurrency(product.revenueAmount)} / {formatCurrency(product.revenueThreshold)}
               </span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
@@ -70,7 +71,7 @@ export default async function ProductPage({ params }: Props) {
               />
             </div>
             <p className="mt-1 text-xs text-gray-400">
-              {product.bumpThreshold - product.subscriberCount} more subscribers to reach 50 and make room on the homepage
+              {formatCurrency(product.revenueThreshold - product.revenueAmount)} more in revenue to make room on the homepage
             </p>
           </div>
         )}

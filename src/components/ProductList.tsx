@@ -28,8 +28,8 @@ export default function ProductList({ products }: Props) {
   const filtered = products
     .filter((p) => category === "All" || p.category === category)
     .sort((a, b) => {
-      if (tab === "today") return b.subscribersToday - a.subscribersToday || b.subscriberCount - a.subscriberCount;
-      return b.subscriberCount - a.subscriberCount;
+      if (tab === "today") return b.revenueToday - a.revenueToday || b.revenueAmount - a.revenueAmount;
+      return b.revenueAmount - a.revenueAmount;
     });
 
   return (

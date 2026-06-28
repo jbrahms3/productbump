@@ -10,19 +10,19 @@ export default function HowItWorksPage() {
       emoji: "🔗",
       title: "Connect Stripe",
       description:
-        "Link your Stripe account via OAuth. We use Stripe Connect to securely receive subscription events — we never touch your funds or customer data.",
+        "Paste a restricted Stripe API key. We use it to register a webhook on your account so we can count revenue — we never touch your funds or customer data.",
     },
     {
       emoji: "📈",
-      title: "Grow your subscriber count",
+      title: "Generate real revenue",
       description:
-        "Every new paying subscriber to your product automatically increments your count on ProductBump. No fake numbers, no gaming — just real subscriber growth.",
+        "Every payment to your product — whether a one-time purchase or a subscription charge — automatically adds to your revenue total on ProductBump. No fake numbers, no gaming.",
     },
     {
       emoji: "🏆",
       title: "Make room for the next product",
       description:
-        "Once you hit 50 verified new subscribers, your spot on the homepage opens up for another product. You've proven traction — now it's someone else's turn.",
+        "Once you hit your revenue goal, your spot on the homepage opens up for another product. You've proven traction — now it's someone else's turn.",
     },
   ];
 
@@ -31,7 +31,7 @@ export default function HowItWorksPage() {
       <div className="mb-12 text-center">
         <h1 className="text-3xl font-bold text-gray-900">How ProductBump works</h1>
         <p className="mt-3 text-gray-500">
-          Rankings here aren&apos;t based on clicks or upvotes — they&apos;re powered entirely by real paying subscribers.
+          Rankings here aren&apos;t based on clicks or upvotes — they&apos;re powered entirely by real revenue.
         </p>
       </div>
 
@@ -53,11 +53,11 @@ export default function HowItWorksPage() {
       </div>
 
       <div className="mt-10 rounded-2xl border border-amber-100 bg-amber-50 p-6 text-center">
-        <h2 className="text-lg font-bold text-amber-900">Why 50 subscribers?</h2>
+        <h2 className="text-lg font-bold text-amber-900">Why revenue?</h2>
         <p className="mt-2 text-sm text-amber-800 leading-relaxed">
-          Fifty real subscribers is our way of celebrating early traction and ensuring every product
-          on ProductBump has proven people love it enough to pay. It&apos;s a meaningful milestone
-          that filters out noise and rewards genuine product-market fit.
+          Real revenue is the truest signal of traction — it works for any product, whether you sell
+          subscriptions or one-time purchases. It filters out noise and rewards products people
+          actually pay for, not just click on.
         </p>
       </div>
     </div>

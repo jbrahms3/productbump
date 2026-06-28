@@ -29,34 +29,34 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  if (event.type === "customer.subscription.created") {
-    const subscription = event.data.object as Stripe.Subscription;
+  // New revenue — fires for both one-time purchases and subscription invoices
+  if (event.type === "charge.succeeded") {
+    const charge = event.data.object as Stripe.Charge;
+    const amount = charge.amount_captured ?? charge.amount;
+    if (amount <= 0) return NextResponse.json({ received: true });
 
-    // Idempotency: skip if already counted
-    const existing = await prisma.subscription.findUnique({
-      where: { stripeSubscriptionId: subscription.id },
+    // Idempotency: skip if we've already counted this charge
+    const existing = await prisma.payment.findUnique({
+      where: { stripeChargeId: charge.id },
     });
     if (existing) return NextResponse.json({ received: true });
 
     const [updated] = await prisma.$transaction([
       prisma.product.update({
         where: { id: product.id },
-        data: { subscriberCount: { increment: 1 } },
+        data: { revenueAmount: { increment: amount } },
       }),
-      prisma.subscription.create({
+      prisma.payment.create({
         data: {
-          stripeSubscriptionId: subscription.id,
-          stripeCustomerId:
-            typeof subscription.customer === "string"
-              ? subscription.customer
-              : subscription.customer.id,
+          stripeChargeId: charge.id,
+          amount,
           productId: product.id,
         },
       }),
     ]);
 
-    // Bump off homepage once threshold reached
-    if (!updated.bumped && updated.subscriberCount >= updated.bumpThreshold) {
+    // Bump off homepage once revenue threshold reached
+    if (!updated.bumped && updated.revenueAmount >= updated.revenueThreshold) {
       await prisma.product.update({
         where: { id: product.id },
         data: { bumped: true, featured: false, bumpedAt: new Date() },
@@ -64,18 +64,19 @@ export async function POST(req: NextRequest, { params }: Params) {
     }
   }
 
-  if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object as Stripe.Subscription;
-    const sub = await prisma.subscription.findUnique({
-      where: { stripeSubscriptionId: subscription.id },
+  // Refund — back out the recorded revenue for that charge
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+    const payment = await prisma.payment.findUnique({
+      where: { stripeChargeId: charge.id },
     });
-    if (sub) {
+    if (payment) {
       await prisma.$transaction([
         prisma.product.update({
-          where: { id: sub.productId },
-          data: { subscriberCount: { decrement: 1 } },
+          where: { id: payment.productId },
+          data: { revenueAmount: { decrement: payment.amount } },
         }),
-        prisma.subscription.delete({ where: { stripeSubscriptionId: subscription.id } }),
+        prisma.payment.delete({ where: { stripeChargeId: charge.id } }),
       ]);
     }
   }

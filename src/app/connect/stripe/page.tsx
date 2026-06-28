@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import StripeKeyForm from "@/components/StripeKeyForm";
+import { formatCurrency } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function ConnectStripePage({ searchParams }: Props) {
   // boxes manually using the instructions below.
   const stripeKeyUrl =
     "https://dashboard.stripe.com/apikeys/create?name=ProductBump" +
-    "&permissions[]=rak_subscription_read" +
+    "&permissions[]=rak_charge_read" +
     "&permissions[]=rak_webhook_write";
 
   return (
@@ -31,7 +32,7 @@ export default async function ConnectStripePage({ searchParams }: Props) {
           <div className="text-4xl mb-3">🔗</div>
           <h1 className="text-2xl font-bold text-gray-900">Connect Stripe</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Link <span className="font-semibold text-gray-800">{product.name}</span> so new subscribers are counted automatically.
+            Link <span className="font-semibold text-gray-800">{product.name}</span> so new revenue is counted automatically.
           </p>
         </div>
 
@@ -39,7 +40,7 @@ export default async function ConnectStripePage({ searchParams }: Props) {
           <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
             <p className="font-semibold text-green-700">✅ Stripe is connected</p>
             <p className="mt-1 text-sm text-green-600">
-              {product.subscriberCount} subscriber{product.subscriberCount !== 1 ? "s" : ""} counted so far
+              {formatCurrency(product.revenueAmount)} in revenue counted so far
             </p>
             <div className="mt-4 flex flex-col gap-2">
               <a href={`/products/${product.slug}`} className="btn-primary justify-center">
@@ -70,7 +71,7 @@ export default async function ConnectStripePage({ searchParams }: Props) {
               </p>
               <ul className="flex flex-col gap-1.5 text-sm">
                 <li className="flex items-center gap-2">
-                  <span className="font-mono text-xs bg-gray-200 px-1.5 py-0.5 rounded">Subscriptions</span>
+                  <span className="font-mono text-xs bg-gray-200 px-1.5 py-0.5 rounded">Charges</span>
                   <span className="text-gray-400">→</span>
                   <span className="font-medium text-gray-700">Read</span>
                 </li>
@@ -88,7 +89,7 @@ export default async function ConnectStripePage({ searchParams }: Props) {
             <StripeKeyForm productId={productId} />
 
             <p className="mt-4 text-center text-xs text-gray-400">
-              We use this key only to read subscriptions and register a webhook.<br />
+              We use this key only to read charges and register a webhook.<br />
               We never charge customers or modify your Stripe settings.
             </p>
           </>

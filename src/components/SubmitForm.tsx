@@ -266,7 +266,7 @@ export default function SubmitForm() {
           {loading ? "Submitting…" : "Submit & Connect Stripe →"}
         </button>
         <p className="text-center text-xs text-gray-400">
-          After submitting, you&apos;ll connect your Stripe account to verify subscribers.
+          After submitting, you&apos;ll connect your Stripe account to verify revenue.
         </p>
       </div>
     </form>

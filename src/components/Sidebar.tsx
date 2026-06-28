@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { EnrichedProduct } from "./ProductCard";
 import SparkLine from "./SparkLine";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/format";
 
 interface Stats {
   totalActive: number;
-  subsToday: number;
+  revenueToday: number;
+  threshold: number;
 }
 
 interface Props {
@@ -38,8 +40,8 @@ export default function Sidebar({ stats, topMovers, almostThere }: Props) {
             <div className="mt-0.5 text-xs text-gray-400 leading-tight">Products on homepage</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-extrabold text-blue-500">{stats.subsToday.toLocaleString()}</div>
-            <div className="mt-0.5 text-xs text-gray-400 leading-tight">New subscribers today</div>
+            <div className="text-2xl font-extrabold text-blue-500">{formatCurrencyCompact(stats.revenueToday)}</div>
+            <div className="mt-0.5 text-xs text-gray-400 leading-tight">New revenue today</div>
           </div>
         </div>
       </div>
@@ -65,7 +67,7 @@ export default function Sidebar({ stats, topMovers, almostThere }: Props) {
                 {p.name}
               </span>
               <span className="text-xs font-semibold text-emerald-500 shrink-0">
-                +{p.subscribersToday} today
+                +{formatCurrencyCompact(p.revenueToday)} today
               </span>
             </Link>
           ))}
@@ -77,10 +79,10 @@ export default function Sidebar({ stats, topMovers, almostThere }: Props) {
 
       {/* Almost There */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h2 className="mb-3 font-bold text-gray-900">Almost at 50 🔥</h2>
+        <h2 className="mb-3 font-bold text-gray-900">Almost at {formatCurrency(stats.threshold)} 🔥</h2>
         <div className="flex flex-col gap-3">
           {almostThere.map((p) => {
-            const pct = Math.round((p.subscriberCount / p.bumpThreshold) * 100);
+            const pct = Math.round((p.revenueAmount / p.revenueThreshold) * 100);
             return (
               <Link
                 key={p.id}
@@ -91,7 +93,7 @@ export default function Sidebar({ stats, topMovers, almostThere }: Props) {
                   <span className="text-sm font-semibold text-gray-800 group-hover:text-brand-600 transition-colors truncate">
                     {p.name}
                   </span>
-                  <span className="text-xs text-gray-400 shrink-0 ml-2">{p.subscriberCount}/50</span>
+                  <span className="text-xs text-gray-400 shrink-0 ml-2">{formatCurrencyCompact(p.revenueAmount)}/{formatCurrencyCompact(p.revenueThreshold)}</span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
                   <div
@@ -118,7 +120,7 @@ export default function Sidebar({ stats, topMovers, almostThere }: Props) {
           <h2 className="font-bold text-amber-900">How does this work?</h2>
         </div>
         <p className="text-sm text-amber-800 leading-relaxed">
-          Products are featured here until they reach 50 real paying subscribers.
+          Products are featured here until they generate {formatCurrency(stats.threshold)} in real revenue.
           Hit the goal and your spot opens up for the next product.
         </p>
         <Link
@@ -131,9 +133,9 @@ export default function Sidebar({ stats, topMovers, almostThere }: Props) {
 
       {/* Sparkline decoration */}
       <div className="overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-        <h2 className="mb-3 font-bold text-gray-900 text-sm">Subscriber Activity</h2>
+        <h2 className="mb-3 font-bold text-gray-900 text-sm">Revenue Activity</h2>
         <SparkLine seed="global-activity" color="#f97316" width={240} height={48} />
-        <p className="mt-2 text-xs text-gray-400">New subscribers across all products</p>
+        <p className="mt-2 text-xs text-gray-400">New revenue across all products</p>
       </div>
     </div>
   );

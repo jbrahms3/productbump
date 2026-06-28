@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   const products = await prisma.product.findMany({
     where: { featured: true, bumped: false },
-    orderBy: [{ subscriberCount: "desc" }, { featuredAt: "desc" }],
+    orderBy: [{ revenueAmount: "desc" }, { featuredAt: "desc" }],
     take: 20,
   });
   return NextResponse.json(products);

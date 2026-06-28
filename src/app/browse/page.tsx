@@ -9,15 +9,15 @@ export default async function BrowsePage() {
 
   const products = await prisma.product.findMany({
     where: { bumped: false },
-    orderBy: [{ subscriberCount: "desc" }],
+    orderBy: [{ revenueAmount: "desc" }],
   });
 
-  const todaySubs = await prisma.subscription.groupBy({
+  const todayPayments = await prisma.payment.groupBy({
     by: ["productId"],
     where: { createdAt: { gte: today } },
-    _count: { id: true },
+    _sum: { amount: true },
   });
-  const todayMap = Object.fromEntries(todaySubs.map((t) => [t.productId, t._count.id]));
+  const todayMap = Object.fromEntries(todayPayments.map((t) => [t.productId, t._sum.amount ?? 0]));
 
   const enriched: EnrichedProduct[] = products.map((p) => ({
     id: p.id,
@@ -26,10 +26,10 @@ export default async function BrowsePage() {
     slug: p.slug,
     category: p.category,
     logoUrl: p.logoUrl,
-    subscriberCount: p.subscriberCount,
-    bumpThreshold: p.bumpThreshold,
+    revenueAmount: p.revenueAmount,
+    revenueThreshold: p.revenueThreshold,
     stripeConnected: p.stripeConnected,
-    subscribersToday: todayMap[p.id] ?? 0,
+    revenueToday: todayMap[p.id] ?? 0,
     rankDelta: todayMap[p.id] ?? 0,
   }));
 

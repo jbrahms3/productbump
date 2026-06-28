@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const THRESHOLD = 10000; // $100 in cents
+
 const products = [
   {
     id: "seed-1",
@@ -14,10 +16,9 @@ const products = [
     makerEmail: "ivan@notion.so",
     category: "Productivity",
     slug: "notion-ai",
-    subscriberCount: 43,
-    bumpThreshold: 50,
+    revenueAmount: 8600, // $86
+    revenueThreshold: THRESHOLD,
     stripeConnected: true,
-    stripeAccountId: null,
   },
   {
     id: "seed-2",
@@ -30,10 +31,9 @@ const products = [
     makerEmail: "karri@linear.app",
     category: "Developer",
     slug: "linear",
-    subscriberCount: 28,
-    bumpThreshold: 50,
+    revenueAmount: 5600, // $56
+    revenueThreshold: THRESHOLD,
     stripeConnected: true,
-    stripeAccountId: null,
   },
   {
     id: "seed-3",
@@ -46,10 +46,9 @@ const products = [
     makerEmail: "shahed@loom.com",
     category: "Productivity",
     slug: "loom",
-    subscriberCount: 11,
-    bumpThreshold: 50,
+    revenueAmount: 2200, // $22
+    revenueThreshold: THRESHOLD,
     stripeConnected: false,
-    stripeAccountId: null,
   },
   {
     id: "seed-4",
@@ -62,10 +61,9 @@ const products = [
     makerEmail: "koen@framer.com",
     category: "Design",
     slug: "framer",
-    subscriberCount: 5,
-    bumpThreshold: 50,
+    revenueAmount: 1000, // $10
+    revenueThreshold: THRESHOLD,
     stripeConnected: true,
-    stripeAccountId: null,
   },
   {
     id: "seed-5",
@@ -78,14 +76,13 @@ const products = [
     makerEmail: "lily@plantpal.app",
     category: "Lifestyle",
     slug: "plantpal",
-    subscriberCount: 3,
-    bumpThreshold: 50,
+    revenueAmount: 600, // $6
+    revenueThreshold: THRESHOLD,
     stripeConnected: true,
-    stripeAccountId: null,
   },
 ];
 
-// Hall of Fame entries
+// Products that already hit the goal and bumped off the homepage
 const bumpedProducts = [
   {
     id: "seed-hof-1",
@@ -97,10 +94,9 @@ const bumpedProducts = [
     makerEmail: "tibo@tweethunter.io",
     category: "Marketing",
     slug: "tweethunter",
-    subscriberCount: 50,
-    bumpThreshold: 50,
+    revenueAmount: 10000, // $100
+    revenueThreshold: THRESHOLD,
     stripeConnected: true,
-    stripeAccountId: null,
     bumped: true,
     featured: false,
     bumpedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2h ago
@@ -115,48 +111,28 @@ const bumpedProducts = [
     makerEmail: "kenneth@opal.so",
     category: "Health",
     slug: "opal",
-    subscriberCount: 62,
-    bumpThreshold: 50,
+    revenueAmount: 12400, // $124
+    revenueThreshold: THRESHOLD,
     stripeConnected: true,
-    stripeAccountId: null,
     bumped: true,
     featured: false,
     bumpedAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5h ago
   },
-  {
-    id: "seed-hof-3",
-    name: "Typefully",
-    tagline: "Write and schedule Twitter threads",
-    description: "Typefully is the distraction-free editor for Twitter. Write better threads and schedule them effortlessly.",
-    websiteUrl: "https://typefully.com",
-    makerName: "Francesco Di Lorenzo",
-    makerEmail: "f@typefully.com",
-    category: "Marketing",
-    slug: "typefully",
-    subscriberCount: 55,
-    bumpThreshold: 50,
-    stripeConnected: true,
-    stripeAccountId: null,
-    bumped: true,
-    featured: false,
-    bumpedAt: new Date(Date.now() - 26 * 60 * 60 * 1000), // 1d ago
-  },
 ];
 
-// Today's subscriptions (for "today" counts)
-function makeSubscriptions(productId: string, count: number) {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `seed-sub-${productId}-${i}`,
-    stripeSubscriptionId: `sub_seed_${productId}_${i}`,
-    stripeCustomerId: `cus_seed_${productId}_${i}`,
+// Today's payments (for "today" revenue figures), amounts in cents
+function makePayments(productId: string, amounts: number[]) {
+  return amounts.map((amount, i) => ({
+    id: `seed-pay-${productId}-${i}`,
+    stripeChargeId: `ch_seed_${productId}_${i}`,
+    amount,
     productId,
     createdAt: new Date(Date.now() - i * 3600 * 1000 * 0.5), // spread over last few hours
   }));
 }
 
 async function main() {
-  // Upsert active products
-  for (const p of products) {
+  for (const p of [...products, ...bumpedProducts]) {
     await prisma.product.upsert({
       where: { id: p.id },
       update: {},
@@ -164,35 +140,26 @@ async function main() {
     });
   }
 
-  // Upsert bumped (Hall of Fame) products
-  for (const p of bumpedProducts) {
-    await prisma.product.upsert({
-      where: { id: p.id },
-      update: {},
-      create: p,
-    });
-  }
-
-  // Seed today's subscriptions
-  const todayCounts: Record<string, number> = {
-    "seed-1": 5,  // Notion AI: +5 today
-    "seed-2": 2,  // Linear: +2 today
-    "seed-3": 1,  // Loom: -1 today (still add 1 but it fluctuates)
-    "seed-4": 3,  // Framer: +3 today
-    "seed-5": 0,  // PlantPal: no new today
+  // Seed today's payments (mix of one-time and subscription-sized charges)
+  const todayPayments: Record<string, number[]> = {
+    "seed-1": [1500, 1500, 900], // Notion AI: +$39 today
+    "seed-2": [2000, 600],       // Linear: +$26 today
+    "seed-3": [1200],            // Loom: +$12 today
+    "seed-4": [1000],            // Framer: +$10 today
+    "seed-5": [],                // PlantPal: nothing today
   };
 
-  for (const [productId, count] of Object.entries(todayCounts)) {
-    for (const sub of makeSubscriptions(productId, count)) {
-      await prisma.subscription.upsert({
-        where: { stripeSubscriptionId: sub.stripeSubscriptionId },
+  for (const [productId, amounts] of Object.entries(todayPayments)) {
+    for (const pay of makePayments(productId, amounts)) {
+      await prisma.payment.upsert({
+        where: { stripeChargeId: pay.stripeChargeId },
         update: {},
-        create: sub,
+        create: pay,
       });
     }
   }
 
-  console.log("✅ Seeded products, Hall of Fame, and today's subscriptions");
+  console.log("✅ Seeded products and today's revenue");
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

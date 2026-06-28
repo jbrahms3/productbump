@@ -13,24 +13,26 @@ export default async function HomePage() {
   // Active products
   const products = await prisma.product.findMany({
     where: { bumped: false },
-    orderBy: [{ subscriberCount: "desc" }, { featuredAt: "desc" }],
+    orderBy: [{ revenueAmount: "desc" }, { featuredAt: "desc" }],
     take: 20,
   });
 
-  // Today's subscription counts per product
-  const todaySubs = await prisma.subscription.groupBy({
+  // Today's revenue per product (sum of payment amounts)
+  const todayPayments = await prisma.payment.groupBy({
     by: ["productId"],
     where: { createdAt: { gte: today } },
-    _count: { id: true },
+    _sum: { amount: true },
   });
-  const todayMap = Object.fromEntries(todaySubs.map((t) => [t.productId, t._count.id]));
+  const todayMap = Object.fromEntries(todayPayments.map((t) => [t.productId, t._sum.amount ?? 0]));
 
-  // Total subs today (all products)
-  const totalSubsToday = await prisma.subscription.count({
+  // Total revenue today (all products)
+  const totalToday = await prisma.payment.aggregate({
     where: { createdAt: { gte: today } },
+    _sum: { amount: true },
   });
+  const totalRevenueToday = totalToday._sum.amount ?? 0;
 
-  // Enrich products with today's count
+  // Enrich products with today's revenue
   const enriched: EnrichedProduct[] = products.map((p) => ({
     id: p.id,
     name: p.name,
@@ -38,26 +40,29 @@ export default async function HomePage() {
     slug: p.slug,
     category: p.category,
     logoUrl: p.logoUrl,
-    subscriberCount: p.subscriberCount,
-    bumpThreshold: p.bumpThreshold,
+    revenueAmount: p.revenueAmount,
+    revenueThreshold: p.revenueThreshold,
     stripeConnected: p.stripeConnected,
-    subscribersToday: todayMap[p.id] ?? 0,
+    revenueToday: todayMap[p.id] ?? 0,
     rankDelta: todayMap[p.id] ?? 0,
   }));
 
-  // Top movers = highest today subs
+  // Top movers = most revenue today
   const topMovers = [...enriched]
-    .sort((a, b) => b.subscribersToday - a.subscribersToday)
+    .sort((a, b) => b.revenueToday - a.revenueToday)
     .slice(0, 3);
 
-  // Almost there = closest to 50, sorted by progress descending
+  // Almost there = closest to goal, sorted by progress descending
   const almostThere = [...enriched]
-    .sort((a, b) => b.subscriberCount / b.bumpThreshold - a.subscriberCount / a.bumpThreshold)
+    .sort((a, b) => b.revenueAmount / b.revenueThreshold - a.revenueAmount / a.revenueThreshold)
     .slice(0, 3);
+
+  // Threshold to display (use the most common / first product's, default $100)
+  const threshold = products[0]?.revenueThreshold ?? 10000;
 
   return (
     <div>
-      <Hero threshold={50} />
+      <Hero threshold={threshold} />
 
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="flex gap-7">
@@ -71,7 +76,8 @@ export default async function HomePage() {
             <Sidebar
               stats={{
                 totalActive: products.length,
-                subsToday: totalSubsToday,
+                revenueToday: totalRevenueToday,
+                threshold,
               }}
               topMovers={topMovers}
               almostThere={almostThere}

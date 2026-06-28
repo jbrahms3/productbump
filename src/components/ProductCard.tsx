@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatCurrency, formatCurrencyCompact } from "@/lib/format";
 
 export interface EnrichedProduct {
   id: string;
@@ -7,10 +8,10 @@ export interface EnrichedProduct {
   slug: string;
   category: string;
   logoUrl: string | null;
-  subscriberCount: number;
-  bumpThreshold: number;
+  revenueAmount: number;
+  revenueThreshold: number;
   stripeConnected: boolean;
-  subscribersToday: number;
+  revenueToday: number;
   rankDelta: number;
 }
 
@@ -44,7 +45,7 @@ interface Props {
 
 export default function ProductCard({ product, rank }: Props) {
   const catStyle = CATEGORY_STYLES[product.category] ?? CATEGORY_STYLES.Other;
-  const progress = Math.min((product.subscriberCount / product.bumpThreshold) * 100, 100);
+  const progress = Math.min((product.revenueAmount / product.revenueThreshold) * 100, 100);
   const pct = Math.round(progress);
   const color = logoColor(product.slug);
   const initial = product.name[0].toUpperCase();
@@ -55,19 +56,12 @@ export default function ProductCard({ product, rank }: Props) {
       {/* Rank */}
       <div className="flex w-10 shrink-0 flex-col items-center">
         <span className="text-lg font-extrabold text-gray-700">{rank}</span>
-        {product.rankDelta > 0 ? (
+        {product.revenueToday > 0 ? (
           <span className="flex items-center text-xs font-semibold text-emerald-500">
             <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 17a1 1 0 01-1-1V6.414L5.707 9.707a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 6.414V16a1 1 0 01-1 1z" clipRule="evenodd" />
             </svg>
-            {product.rankDelta}
-          </span>
-        ) : product.rankDelta < 0 ? (
-          <span className="flex items-center text-xs font-semibold text-red-400">
-            <svg className="h-2.5 w-2.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 011.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 011.414-1.414L9 13.586V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            {Math.abs(product.rankDelta)}
+            {formatCurrencyCompact(product.revenueToday)}
           </span>
         ) : (
           <span className="text-xs text-gray-300">—</span>
@@ -87,7 +81,7 @@ export default function ProductCard({ product, rank }: Props) {
             initial
           )}
         </div>
-        {product.subscribersToday > 0 && (
+        {product.revenueToday > 0 && (
           <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[9px] font-bold text-white ring-2 ring-white">
             +
           </span>
@@ -127,21 +121,21 @@ export default function ProductCard({ product, rank }: Props) {
             />
           </div>
           <span className="shrink-0 text-xs text-gray-400">
-            {product.subscriberCount} / {product.bumpThreshold} subscribers
+            {formatCurrency(product.revenueAmount)} / {formatCurrency(product.revenueThreshold)}
           </span>
           <span className="shrink-0 text-xs font-semibold text-brand-500">
-            {pct}% subscribed
+            {pct}% to goal
           </span>
         </div>
       </div>
 
-      {/* Subscriber count pill */}
-      <div className="hidden sm:flex shrink-0 flex-col items-center justify-center w-14 rounded-xl border border-gray-200 bg-white py-2 gap-0.5 shadow-sm">
+      {/* Revenue pill */}
+      <div className="hidden sm:flex shrink-0 flex-col items-center justify-center min-w-[3.5rem] px-2 rounded-xl border border-gray-200 bg-white py-2 gap-0.5 shadow-sm">
         <svg className="h-4 w-4 text-brand-500" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 17a1 1 0 01-1-1V6.414L5.707 9.707a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 6.414V16a1 1 0 01-1 1z" clipRule="evenodd" />
         </svg>
-        <span className="text-sm font-bold text-gray-800 leading-none">{product.subscriberCount}</span>
-        <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">subs</span>
+        <span className="text-sm font-bold text-gray-800 leading-none">{formatCurrencyCompact(product.revenueAmount)}</span>
+        <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">raised</span>
       </div>
     </div>
   );

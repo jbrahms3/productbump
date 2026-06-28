@@ -6,8 +6,8 @@ export default function SubmitPage() {
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">Submit your product</h1>
         <p className="mt-2 text-gray-500">
-          List your product and connect Stripe to verify real subscriber growth.
-          Your subscriber count updates automatically as new customers sign up.
+          List your product and connect Stripe to verify real revenue.
+          Your revenue total updates automatically as customers pay.
         </p>
       </div>
       <div className="card p-6">

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format";
 
-export default function Hero({ threshold = 50 }: { threshold?: number }) {
+export default function Hero({ threshold = 10000 }: { threshold?: number }) {
   return (
     <div className="border-b border-gray-100 bg-white">
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -14,8 +15,8 @@ export default function Hero({ threshold = 50 }: { threshold?: number }) {
               today
             </h1>
             <p className="mt-4 text-base text-gray-500 leading-relaxed">
-              Every product here is ranked by real paying subscribers — not clicks or upvotes.
-              Once a product hits 50, it makes room for the next one.
+              Every product here is ranked by real revenue — not clicks or upvotes.
+              Once a product hits {formatCurrency(threshold)}, it makes room for the next one.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/submit" className="btn-primary py-2.5 px-5 text-sm">
@@ -37,16 +38,16 @@ export default function Hero({ threshold = 50 }: { threshold?: number }) {
               <div className="flex items-center justify-between gap-1">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-2xl">🚀</div>
-                  <p className="text-xs font-semibold text-gray-700">Get 0</p>
-                  <p className="text-xs text-gray-400">new subscribers</p>
+                  <p className="text-xs font-semibold text-gray-700">Start at $0</p>
+                  <p className="text-xs text-gray-400">in revenue</p>
                 </div>
                 <div className="flex flex-1 items-center px-1">
                   <div className="h-px flex-1 border-t-2 border-dashed border-gray-300" />
                 </div>
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-2xl">📈</div>
-                  <p className="text-xs font-semibold text-gray-700">Reach {threshold}</p>
-                  <p className="text-xs text-gray-400">new subscribers</p>
+                  <p className="text-xs font-semibold text-gray-700">Reach {formatCurrency(threshold)}</p>
+                  <p className="text-xs text-gray-400">in revenue</p>
                 </div>
                 <div className="flex flex-1 items-center px-1">
                   <div className="h-px flex-1 border-t-2 border-dashed border-gray-300" />

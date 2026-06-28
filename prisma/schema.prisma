@@ -24,9 +24,9 @@ model Product {
   stripeWebhookEndpointId  String?   // so we can delete/re-register the webhook
   stripeConnected          Boolean   @default(false)
 
-  // Subscriber / bump tracking
-  subscriberCount  Int       @default(0)
-  bumpThreshold    Int       @default(50)
+  // Revenue / bump tracking (amounts in cents)
+  revenueAmount    Int       @default(0)      // total new revenue generated, in cents
+  revenueThreshold Int       @default(10000)  // $100 goal to bump off homepage
   bumped           Boolean   @default(false)  // graduated off homepage
   bumpedAt         DateTime?
 
@@ -40,14 +40,14 @@ model Product {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  subscriptions    Subscription[]
+  payments         Payment[]
 }
 
-model Subscription {
-  id                    String   @id @default(cuid())
-  stripeSubscriptionId  String   @unique
-  stripeCustomerId      String
-  productId             String
-  product               Product  @relation(fields: [productId], references: [id])
-  createdAt             DateTime @default(now())
+model Payment {
+  id              String   @id @default(cuid())
+  stripeChargeId  String   @unique
+  amount          Int      // amount in cents (one-time purchase or subscription invoice)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  createdAt       DateTime @default(now())
 }
