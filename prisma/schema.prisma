@@ -18,9 +18,11 @@ model Product {
   makerEmail       String
   slug             String    @unique
 
-  // Stripe Connect fields
-  stripeAccountId  String?
-  stripeConnected  Boolean   @default(false)
+  // Stripe integration fields
+  stripeRestrictedKey      String?   // maker's restricted API key
+  stripeWebhookSecret      String?   // signing secret for this product's webhook
+  stripeWebhookEndpointId  String?   // so we can delete/re-register the webhook
+  stripeConnected          Boolean   @default(false)
 
   // Subscriber / bump tracking
   subscriberCount  Int       @default(0)

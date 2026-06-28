@@ -1,61 +1,75 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import ConnectStripeButton from "@/components/ConnectStripeButton";
+import StripeKeyForm from "@/components/StripeKeyForm";
 
 interface Props {
-  searchParams: Promise<{ productId?: string; success?: string; error?: string }>;
+  searchParams: Promise<{ productId?: string }>;
 }
 
 export default async function ConnectStripePage({ searchParams }: Props) {
-  const { productId, success, error } = await searchParams;
-
+  const { productId } = await searchParams;
   if (!productId) notFound();
 
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) notFound();
 
-  const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${process.env.STRIPE_CLIENT_ID}&scope=read_write&state=${productId}&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_BASE_URL + "/api/connect/stripe/callback")}`;
-
   return (
-    <div className="mx-auto max-w-md text-center">
+    <div className="mx-auto max-w-lg px-4 py-10">
       <div className="card p-8">
-        <div className="mb-4 text-5xl">🔗</div>
-        <h1 className="text-2xl font-bold text-gray-900">Connect Stripe</h1>
-        <p className="mt-2 text-gray-500">
-          Connect your Stripe account to{" "}
-          <span className="font-semibold text-gray-800">{product.name}</span> so
-          we can count new subscribers as verified bumps.
-        </p>
+        <div className="mb-6 text-center">
+          <div className="text-4xl mb-3">🔗</div>
+          <h1 className="text-2xl font-bold text-gray-900">Connect Stripe</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Link <span className="font-semibold text-gray-800">{product.name}</span> so new subscribers are counted automatically.
+          </p>
+        </div>
 
-        {success === "1" && (
-          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-            ✅ Stripe connected! New subscribers will now update your bump count automatically.
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            ❌ {decodeURIComponent(error)}
-          </div>
-        )}
-
-        <div className="mt-6 flex flex-col gap-3">
-          {!product.stripeConnected ? (
-            <ConnectStripeButton href={stripeOAuthUrl} />
-          ) : (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-              ✅ Already connected! Subscribers count: {product.subscriberCount}
+        {product.stripeConnected ? (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
+            <p className="font-semibold text-green-700">✅ Stripe is connected</p>
+            <p className="mt-1 text-sm text-green-600">
+              {product.subscriberCount} subscriber{product.subscriberCount !== 1 ? "s" : ""} counted so far
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <a href={`/products/${product.slug}`} className="btn-primary justify-center">
+                View product →
+              </a>
+              <StripeKeyForm productId={productId} reconnect />
             </div>
-          )}
-          <a href={`/products/${product.slug}`} className="btn-secondary justify-center">
-            View product page →
-          </a>
-        </div>
+          </div>
+        ) : (
+          <>
+            {/* How to get the key */}
+            <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">How to get your key</p>
+              <ol className="flex flex-col gap-2.5 text-sm text-gray-600">
+                <li className="flex gap-2">
+                  <span className="font-bold text-brand-500 shrink-0">1.</span>
+                  Go to <span className="font-medium">stripe.com/dashboard</span> → Developers → API keys
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-brand-500 shrink-0">2.</span>
+                  Click <span className="font-medium">Create restricted key</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-brand-500 shrink-0">3.</span>
+                  Give it a name (e.g. "ProductBump") and set <span className="font-mono text-xs bg-gray-200 px-1 py-0.5 rounded">Subscriptions</span> to <span className="font-medium">Read</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-brand-500 shrink-0">4.</span>
+                  Copy the key (starts with <span className="font-mono text-xs bg-gray-200 px-1 py-0.5 rounded">rk_</span>) and paste it below
+                </li>
+              </ol>
+            </div>
 
-        <div className="mt-6 border-t border-gray-100 pt-4 text-xs text-gray-400">
-          <p>We only read new subscription events to count bumps.</p>
-          <p>We never charge your customers or modify your Stripe account.</p>
-        </div>
+            <StripeKeyForm productId={productId} />
+
+            <p className="mt-4 text-center text-xs text-gray-400">
+              We use this key only to register a webhook on your account.<br />
+              We never charge customers or modify your Stripe settings.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 const CATEGORIES = [
@@ -12,12 +12,17 @@ export default function SubmitForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     name: "",
     tagline: "",
     description: "",
     websiteUrl: "",
-    logoUrl: "",
     makerName: "",
     makerEmail: "",
     category: "Productivity",
@@ -27,19 +32,65 @@ export default function SubmitForm() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  async function uploadFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setError("Logo must be an image file.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Logo must be under 2 MB.");
+      return;
+    }
+    setError("");
+    setLogoUploading(true);
+    setLogoPreview(URL.createObjectURL(file));
+
+    const data = new FormData();
+    data.append("file", file);
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      setLogoUrl(json.url);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+      setLogoPreview(null);
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  }
+
+  function removeLogo() {
+    setLogoPreview(null);
+    setLogoUrl("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (logoUploading) return;
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, logoUrl }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to submit");
-      // Redirect to the connect-stripe page for this product
       router.push(`/connect/stripe?productId=${data.id}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -110,14 +161,69 @@ export default function SubmitForm() {
         />
       </div>
 
+      {/* Logo upload */}
       <div>
-        <label className="label">Logo URL</label>
+        <label className="label">Logo</label>
+        {logoPreview ? (
+          <div className="flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoPreview}
+              alt="Logo preview"
+              className="h-16 w-16 rounded-2xl border border-gray-200 object-contain p-1 shadow-sm"
+            />
+            <div className="flex flex-col gap-1">
+              {logoUploading ? (
+                <span className="flex items-center gap-2 text-sm text-gray-500">
+                  <svg className="h-4 w-4 animate-spin text-brand-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Uploading…
+                </span>
+              ) : (
+                <span className="text-sm font-medium text-emerald-600">✓ Logo uploaded</span>
+              )}
+              <button
+                type="button"
+                onClick={removeLogo}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors text-left"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-8 transition-colors ${
+              dragging
+                ? "border-brand-400 bg-brand-50"
+                : "border-gray-200 bg-gray-50 hover:border-brand-300 hover:bg-brand-50/50"
+            }`}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm border border-gray-100">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-700">
+                Drop your logo here, or <span className="text-brand-600">browse</span>
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, WebP, SVG — max 2 MB</p>
+            </div>
+          </div>
+        )}
         <input
-          className="input"
-          type="url"
-          placeholder="https://yourproduct.com/logo.png"
-          value={form.logoUrl}
-          onChange={(e) => set("logoUrl", e.target.value)}
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
         />
       </div>
 
@@ -152,7 +258,11 @@ export default function SubmitForm() {
       )}
 
       <div className="flex flex-col gap-2">
-        <button type="submit" className="btn-primary justify-center py-3 text-base" disabled={loading}>
+        <button
+          type="submit"
+          className="btn-primary justify-center py-3 text-base"
+          disabled={loading || logoUploading}
+        >
           {loading ? "Submitting…" : "Submit & Connect Stripe →"}
         </button>
         <p className="text-center text-xs text-gray-400">
