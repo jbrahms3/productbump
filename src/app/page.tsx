@@ -4,7 +4,7 @@ import ProductList from "@/components/ProductList";
 import Sidebar from "@/components/Sidebar";
 import { EnrichedProduct } from "@/components/ProductCard";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const today = new Date();

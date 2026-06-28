@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import ProductCard, { EnrichedProduct } from "@/components/ProductCard";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 export default async function BrowsePage() {
   const today = new Date();

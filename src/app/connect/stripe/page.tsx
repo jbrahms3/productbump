@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import StripeKeyForm from "@/components/StripeKeyForm";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   searchParams: Promise<{ productId?: string }>;
 }
