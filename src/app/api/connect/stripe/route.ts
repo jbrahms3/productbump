@@ -41,8 +41,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Register a webhook endpoint on the maker's Stripe account
-  const webhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/stripe/${productId}`;
+  // Register a webhook endpoint on the maker's Stripe account.
+  // Strip any trailing slash from the base URL — a double slash makes Next.js
+  // issue a 308 redirect, which Stripe webhooks do not follow.
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "");
+  const webhookUrl = `${baseUrl}/api/webhooks/stripe/${productId}`;
   let endpoint: Stripe.WebhookEndpoint;
   try {
     endpoint = await makerStripe.webhookEndpoints.create({
