@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser, SignInButton } from "@clerk/nextjs";
+import { formatTimeAgo } from "@/lib/format";
 
 interface Comment {
   id: string;
@@ -13,17 +14,6 @@ interface Comment {
 interface Props {
   productId: string;
   initialComments: Comment[];
-}
-
-function timeAgo(dateStr: string) {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 export default function CommentSection({ productId, initialComments }: Props) {
@@ -57,7 +47,7 @@ export default function CommentSection({ productId, initialComments }: Props) {
   }
 
   return (
-    <div className="border-t border-gray-100 px-6 py-5">
+    <div className="px-6 py-5">
       <h2 className="mb-3 font-semibold text-gray-700">
         Comments {comments.length > 0 && <span className="text-gray-400">({comments.length})</span>}
       </h2>
@@ -101,7 +91,7 @@ export default function CommentSection({ productId, initialComments }: Props) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-semibold text-gray-800">{c.authorName}</span>
-                  <span className="text-xs text-gray-400">{timeAgo(c.createdAt)}</span>
+                  <span className="text-xs text-gray-400">{formatTimeAgo(c.createdAt)}</span>
                 </div>
                 <p className="mt-0.5 whitespace-pre-wrap text-sm text-gray-600">{c.body}</p>
               </div>

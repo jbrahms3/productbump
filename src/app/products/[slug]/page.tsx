@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatTimeAgo } from "@/lib/format";
 import CommentSection from "@/components/CommentSection";
 import BumpButton from "@/components/BumpButton";
 
@@ -45,6 +45,19 @@ export default async function ProductPage({ params }: Props) {
     orderBy: { createdAt: "desc" },
   });
 
+  const transactions = await prisma.payment.findMany({
+    where: { productId: product.id },
+    orderBy: { createdAt: "desc" },
+    take: 25,
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const revenueToday = await prisma.payment.aggregate({
+    where: { productId: product.id, createdAt: { gte: today } },
+    _sum: { amount: true },
+  });
+
   const progress = Math.min(
     (product.revenueAmount / product.revenueThreshold) * 100,
     100
@@ -61,6 +74,7 @@ export default async function ProductPage({ params }: Props) {
         {!product.bumped && <BumpButton productId={product.id} makerUserId={product.makerUserId} />}
       </div>
 
+      {/* Product info */}
       <div className="card overflow-hidden">
         {/* Header */}
         <div className="flex items-start gap-4 p-6">
@@ -83,33 +97,7 @@ export default async function ProductPage({ params }: Props) {
             <p className="mt-1 text-gray-500">{product.tagline}</p>
             <p className="mt-1 text-xs text-gray-400">by {product.makerName}</p>
           </div>
-          <div className="flex shrink-0 flex-col items-center gap-1 rounded-xl border border-gray-200 p-3">
-            <span className="text-2xl">▲</span>
-            <span className="text-xl font-bold">{formatCurrency(product.revenueAmount)}</span>
-            <span className="text-xs text-gray-400">revenue</span>
-          </div>
         </div>
-
-        {/* Progress */}
-        {!product.bumped && (
-          <div className="border-t border-gray-100 bg-gray-50 px-6 py-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-gray-700">Progress to {formatCurrency(product.revenueThreshold)}</span>
-              <span className="text-gray-500">
-                {formatCurrency(product.revenueAmount)} / {formatCurrency(product.revenueThreshold)}
-              </span>
-            </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-500 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="mt-1 text-xs text-gray-400">
-              {formatCurrency(product.revenueThreshold - product.revenueAmount)} more in revenue to make room on the homepage
-            </p>
-          </div>
-        )}
 
         {/* Description */}
         <div className="border-t border-gray-100 px-6 py-5">
@@ -158,9 +146,6 @@ export default async function ProductPage({ params }: Props) {
           </div>
         )}
 
-        {/* Comments */}
-        <CommentSection productId={product.id} initialComments={comments.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() }))} />
-
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -184,6 +169,71 @@ export default async function ProductPage({ params }: Props) {
             Visit {product.name} →
           </a>
         </div>
+      </div>
+
+      {/* Revenue */}
+      <div className="card mt-6 overflow-hidden">
+        <div className="flex items-center justify-between p-6">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Total revenue</p>
+            <p className="mt-1 text-3xl font-bold text-gray-900">{formatCurrency(product.revenueAmount)}</p>
+          </div>
+          <div className="flex shrink-0 flex-col items-center gap-1 rounded-xl border border-gray-200 p-3">
+            <span className="text-2xl">▲</span>
+            <span className="text-xl font-bold">{formatCurrency(revenueToday._sum.amount ?? 0)}</span>
+            <span className="text-xs text-gray-400">today</span>
+          </div>
+        </div>
+
+        {/* Progress */}
+        {!product.bumped && (
+          <div className="border-t border-gray-100 bg-gray-50 px-6 py-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-700">Progress to {formatCurrency(product.revenueThreshold)}</span>
+              <span className="text-gray-500">
+                {formatCurrency(product.revenueAmount)} / {formatCurrency(product.revenueThreshold)}
+              </span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-500 transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              {formatCurrency(product.revenueThreshold - product.revenueAmount)} more in revenue to make room on the homepage
+            </p>
+          </div>
+        )}
+
+        {/* Transaction history */}
+        <div className="border-t border-gray-100 px-6 py-5">
+          <h2 className="mb-3 font-semibold text-gray-700">
+            Transaction history {transactions.length > 0 && <span className="text-gray-400">({transactions.length})</span>}
+          </h2>
+          {transactions.length === 0 ? (
+            <p className="text-sm text-gray-400">No transactions yet.</p>
+          ) : (
+            <div className="flex flex-col divide-y divide-gray-100">
+              {transactions.map((t) => (
+                <div key={t.id} className="flex items-center justify-between py-2.5">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600">
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 17a1 1 0 01-1-1V6.414L5.707 9.707a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 6.414V16a1 1 0 01-1 1z" clipRule="evenodd" />
+                    </svg>
+                    {formatCurrency(t.amount)}
+                  </span>
+                  <span className="text-xs text-gray-400">{formatTimeAgo(t.createdAt)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Comments */}
+      <div className="card mt-6 overflow-hidden">
+        <CommentSection productId={product.id} initialComments={comments.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() }))} />
       </div>
     </div>
   );
