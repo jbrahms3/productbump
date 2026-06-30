@@ -14,6 +14,8 @@ model Product {
   description      String
   websiteUrl       String
   logoUrl          String?
+  demoVideoUrl     String?     // optional YouTube/Loom/Vimeo link
+  screenshots      String[]    @default([]) // up to 6 screenshot URLs
   makerName        String
   makerEmail       String
   makerUserId      String?   // Clerk user id of the submitter
@@ -43,6 +45,7 @@ model Product {
   updatedAt        DateTime  @updatedAt
 
   payments         Payment[]
+  comments         Comment[]
 }
 
 model Payment {
@@ -52,4 +55,14 @@ model Payment {
   productId       String
   product         Product  @relation(fields: [productId], references: [id])
   createdAt       DateTime @default(now())
+}
+
+model Comment {
+  id            String   @id @default(cuid())
+  body          String
+  authorUserId  String   // Clerk user id of the commenter
+  authorName    String   // display name cached at time of posting
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  createdAt     DateTime @default(now())
 }

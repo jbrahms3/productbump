@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, tagline, description, websiteUrl, logoUrl, makerName, makerEmail, category } = body;
+    const {
+      name, tagline, description, websiteUrl, logoUrl, demoVideoUrl, screenshots,
+      makerName, makerEmail, category,
+    } = body;
 
     if (!name || !tagline || !description || !websiteUrl || !makerName || !makerEmail) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -42,6 +45,8 @@ export async function POST(req: NextRequest) {
         description,
         websiteUrl,
         logoUrl: logoUrl || null,
+        demoVideoUrl: demoVideoUrl || null,
+        screenshots: Array.isArray(screenshots) ? screenshots.slice(0, 6) : [],
         makerName,
         makerEmail,
         makerUserId: userId,

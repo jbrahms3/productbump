@@ -18,11 +18,18 @@ export default function SubmitForm() {
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_SCREENSHOTS = 6;
+  const [screenshots, setScreenshots] = useState<{ url: string; preview: string }[]>([]);
+  const [screenshotUploading, setScreenshotUploading] = useState(false);
+  const [screenshotDragging, setScreenshotDragging] = useState(false);
+  const screenshotInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     name: "",
     tagline: "",
     description: "",
     websiteUrl: "",
+    demoVideoUrl: "",
     makerName: "",
     makerEmail: "",
     category: "Productivity",
@@ -78,6 +85,52 @@ export default function SubmitForm() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  async function uploadScreenshots(files: FileList | File[]) {
+    const slotsLeft = MAX_SCREENSHOTS - screenshots.length;
+    if (slotsLeft <= 0) return;
+    const toUpload = Array.from(files).slice(0, slotsLeft);
+
+    setScreenshotUploading(true);
+    setError("");
+    for (const file of toUpload) {
+      if (!file.type.startsWith("image/")) {
+        setError("Screenshots must be image files.");
+        continue;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setError("Each screenshot must be under 2 MB.");
+        continue;
+      }
+      const preview = URL.createObjectURL(file);
+      const data = new FormData();
+      data.append("file", file);
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: data });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "Upload failed");
+        setScreenshots((s) => [...s, { url: json.url, preview }]);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Upload failed");
+      }
+    }
+    setScreenshotUploading(false);
+  }
+
+  function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) uploadScreenshots(e.target.files);
+    e.target.value = "";
+  }
+
+  function handleScreenshotDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setScreenshotDragging(false);
+    uploadScreenshots(e.dataTransfer.files);
+  }
+
+  function removeScreenshot(index: number) {
+    setScreenshots((s) => s.filter((_, i) => i !== index));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (logoUploading) return;
@@ -87,7 +140,11 @@ export default function SubmitForm() {
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, logoUrl }),
+        body: JSON.stringify({
+          ...form,
+          logoUrl,
+          screenshots: screenshots.map((s) => s.url),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to submit");
@@ -224,6 +281,65 @@ export default function SubmitForm() {
           accept="image/*"
           className="hidden"
           onChange={handleFileChange}
+        />
+      </div>
+
+      <div>
+        <label className="label">Demo video (optional)</label>
+        <input
+          className="input"
+          type="url"
+          placeholder="https://youtube.com/watch?v=... or loom.com/share/..."
+          value={form.demoVideoUrl}
+          onChange={(e) => set("demoVideoUrl", e.target.value)}
+        />
+      </div>
+
+      {/* Screenshots */}
+      <div>
+        <label className="label">Screenshots (optional, up to {MAX_SCREENSHOTS})</label>
+        {screenshots.length > 0 && (
+          <div className="mb-3 grid grid-cols-3 gap-3">
+            {screenshots.map((s, i) => (
+              <div key={s.url} className="group relative overflow-hidden rounded-lg border border-gray-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={s.preview} alt={`Screenshot ${i + 1}`} className="aspect-video w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeScreenshot(i)}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {screenshots.length < MAX_SCREENSHOTS && (
+          <div
+            onClick={() => screenshotInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setScreenshotDragging(true); }}
+            onDragLeave={() => setScreenshotDragging(false)}
+            onDrop={handleScreenshotDrop}
+            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-6 py-6 transition-colors ${
+              screenshotDragging
+                ? "border-brand-400 bg-brand-50"
+                : "border-gray-200 bg-gray-50 hover:border-brand-300 hover:bg-brand-50/50"
+            }`}
+          >
+            <p className="text-sm font-medium text-gray-700">
+              {screenshotUploading ? "Uploading…" : <>Drop screenshots here, or <span className="text-brand-600">browse</span></>}
+            </p>
+            <p className="text-xs text-gray-400">PNG, JPG, WebP — max 2 MB each, {MAX_SCREENSHOTS - screenshots.length} left</p>
+          </div>
+        )}
+        <input
+          ref={screenshotInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleScreenshotChange}
         />
       </div>
 

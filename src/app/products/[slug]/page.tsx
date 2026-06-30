@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/format";
+import CommentSection from "@/components/CommentSection";
 
 export const dynamic = "force-dynamic";
 
@@ -10,15 +11,45 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+function embedUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtube.com")) {
+      const id = u.searchParams.get("v");
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (u.hostname === "youtu.be") {
+      return `https://www.youtube.com/embed${u.pathname}`;
+    }
+    if (u.hostname.includes("loom.com") && u.pathname.startsWith("/share/")) {
+      return `https://www.loom.com/embed${u.pathname.replace("/share", "")}`;
+    }
+    if (u.hostname.includes("vimeo.com")) {
+      const id = u.pathname.split("/").filter(Boolean).pop();
+      return id ? `https://player.vimeo.com/video/${id}` : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await prisma.product.findUnique({ where: { slug } });
   if (!product) notFound();
 
+  const comments = await prisma.comment.findMany({
+    where: { productId: product.id },
+    orderBy: { createdAt: "desc" },
+  });
+
   const progress = Math.min(
     (product.revenueAmount / product.revenueThreshold) * 100,
     100
   );
+
+  const embed = product.demoVideoUrl ? embedUrl(product.demoVideoUrl) : null;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -81,6 +112,50 @@ export default async function ProductPage({ params }: Props) {
           <h2 className="mb-2 font-semibold text-gray-700">About</h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{product.description}</p>
         </div>
+
+        {/* Demo video */}
+        {product.demoVideoUrl && (
+          <div className="border-t border-gray-100 px-6 py-5">
+            <h2 className="mb-2 font-semibold text-gray-700">Demo</h2>
+            {embed ? (
+              <div className="aspect-video overflow-hidden rounded-xl border border-gray-100">
+                <iframe
+                  src={embed}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <a
+                href={product.demoVideoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline"
+              >
+                ▶ Watch demo video
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Screenshots */}
+        {product.screenshots.length > 0 && (
+          <div className="border-t border-gray-100 px-6 py-5">
+            <h2 className="mb-2 font-semibold text-gray-700">Screenshots</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {product.screenshots.map((url, i) => (
+                <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg border border-gray-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`${product.name} screenshot ${i + 1}`} className="aspect-video w-full object-cover" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Comments */}
+        <CommentSection productId={product.id} initialComments={comments.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() }))} />
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-gray-100 px-6 py-4">
