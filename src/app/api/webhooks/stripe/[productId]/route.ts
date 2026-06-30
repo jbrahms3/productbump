@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
@@ -21,9 +20,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Product not found or webhook not configured" }, { status: 404 });
   }
 
+  const makerStripe = new Stripe(product.stripeRestrictedKey!, { apiVersion: "2025-02-24.acacia" });
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, product.stripeWebhookSecret);
+    event = makerStripe.webhooks.constructEvent(body, sig, product.stripeWebhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
