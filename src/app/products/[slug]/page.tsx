@@ -74,10 +74,10 @@ export default async function ProductPage({ params }: Props) {
         {!product.bumped && <BumpButton productId={product.id} makerUserId={product.makerUserId} />}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
 
       {/* Product info */}
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden lg:col-span-2">
         {/* Header */}
         <div className="flex items-start gap-4 p-6">
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-gray-50">
