@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
 
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
   const uploadDir = join(process.cwd(), "public", "uploads", "logos");
   const filepath = join(uploadDir, filename);
 
+  await mkdir(uploadDir, { recursive: true });
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filepath, buffer);
 
