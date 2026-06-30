@@ -45,6 +45,7 @@ export default async function HomePage() {
     stripeConnected: p.stripeConnected,
     revenueToday: todayMap[p.id] ?? 0,
     rankDelta: todayMap[p.id] ?? 0,
+    randomSlot: p.randomSlot,
   }));
 
   // Top movers = most revenue today

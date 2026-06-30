@@ -13,6 +13,7 @@ export interface EnrichedProduct {
   stripeConnected: boolean;
   revenueToday: number;
   rankDelta: number;
+  randomSlot?: boolean;
 }
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -51,7 +52,13 @@ export default function ProductCard({ product, rank }: Props) {
   const initial = product.name[0].toUpperCase();
 
   return (
-    <div className="group flex items-center gap-4 rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm transition hover:border-gray-200 hover:shadow-md">
+    <div
+      className={`group flex items-center gap-4 rounded-xl border bg-white px-4 py-4 shadow-sm transition hover:shadow-md ${
+        product.randomSlot
+          ? "border-violet-300 ring-2 ring-violet-200 hover:border-violet-400"
+          : "border-gray-100 hover:border-gray-200"
+      }`}
+    >
 
       {/* Rank */}
       <div className="flex w-10 shrink-0 flex-col items-center">
@@ -103,6 +110,11 @@ export default function ProductCard({ product, rank }: Props) {
           {!product.stripeConnected && (
             <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600 ring-1 ring-amber-200">
               ⚡ Unverified
+            </span>
+          )}
+          {product.randomSlot && (
+            <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-600 ring-1 ring-violet-200">
+              🎲 Random pick
             </span>
           )}
         </div>
