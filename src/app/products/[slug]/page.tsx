@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/format";
 import CommentSection from "@/components/CommentSection";
+import BumpButton from "@/components/BumpButton";
 
 export const dynamic = "force-dynamic";
 
@@ -53,9 +54,12 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/" className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-        ← Back to homepage
-      </Link>
+      <div className="mb-6 flex items-center justify-between">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+          ← Back to homepage
+        </Link>
+        {!product.bumped && <BumpButton productId={product.id} makerUserId={product.makerUserId} />}
+      </div>
 
       <div className="card overflow-hidden">
         {/* Header */}
