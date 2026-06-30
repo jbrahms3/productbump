@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
+import { r2, R2_BUCKET, R2_PUBLIC_URL } from "@/lib/r2";
 
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
@@ -19,13 +19,22 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
-  const filename = `${randomUUID()}.${ext}`;
-  const uploadDir = join(process.cwd(), "public", "uploads", "logos");
-  const filepath = join(uploadDir, filename);
+  const key = `logos/${randomUUID()}.${ext}`;
 
-  await mkdir(uploadDir, { recursive: true });
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filepath, buffer);
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await r2.send(
+      new PutObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: file.type,
+      })
+    );
+  } catch (err) {
+    console.error("R2 upload failed:", err);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  }
 
-  return NextResponse.json({ url: `/uploads/logos/${filename}` });
+  return NextResponse.json({ url: `${R2_PUBLIC_URL}/${key}` });
 }
