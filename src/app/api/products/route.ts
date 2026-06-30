@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { fillOpenSlots } from "@/lib/queue";
 
 function slugify(name: string) {
   return name
@@ -39,8 +40,12 @@ export async function POST(req: NextRequest) {
         makerEmail,
         category: category || "Other",
         slug,
+        featured: false, // joins the queue; fillOpenSlots promotes it if a homepage slot is open
       },
     });
+
+    // Submission order is the queue order — fill any open homepage slot immediately
+    await fillOpenSlots();
 
     return NextResponse.json(product, { status: 201 });
   } catch (err) {

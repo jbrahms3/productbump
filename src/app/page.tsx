@@ -10,13 +10,11 @@ export default async function HomePage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Active products — only 8 homepage slots. When a product hits its goal the
-  // webhook marks it bumped, freeing its slot for the next-ranked product.
-  const HOMEPAGE_SLOTS = 8;
+  // Active products — only 8 homepage slots, assigned by the submission queue
+  // (FIFO, with one random slot). Display order is still ranked by revenue.
   const products = await prisma.product.findMany({
-    where: { bumped: false },
+    where: { featured: true, bumped: false },
     orderBy: [{ revenueAmount: "desc" }, { featuredAt: "desc" }],
-    take: HOMEPAGE_SLOTS,
   });
 
   // Today's revenue per product (sum of payment amounts)

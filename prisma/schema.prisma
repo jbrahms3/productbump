@@ -31,8 +31,9 @@ model Product {
   bumpedAt         DateTime?
 
   // Homepage position
-  featured         Boolean   @default(true)   // visible on homepage
+  featured         Boolean   @default(false)  // visible on homepage (one of 8 slots)
   featuredAt       DateTime  @default(now())
+  randomSlot       Boolean   @default(false)  // this slot pulls a random product from the queue on bump, instead of FIFO
 
   // Category tag
   category         String    @default("Productivity")

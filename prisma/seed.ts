@@ -19,6 +19,7 @@ const products = [
     revenueAmount: 8600, // $86
     revenueThreshold: THRESHOLD,
     stripeConnected: true,
+    featured: true,
   },
   {
     id: "seed-2",
@@ -34,6 +35,7 @@ const products = [
     revenueAmount: 5600, // $56
     revenueThreshold: THRESHOLD,
     stripeConnected: true,
+    featured: true,
   },
   {
     id: "seed-3",
@@ -49,6 +51,7 @@ const products = [
     revenueAmount: 2200, // $22
     revenueThreshold: THRESHOLD,
     stripeConnected: false,
+    featured: true,
   },
   {
     id: "seed-4",
@@ -64,6 +67,7 @@ const products = [
     revenueAmount: 1000, // $10
     revenueThreshold: THRESHOLD,
     stripeConnected: true,
+    featured: true,
   },
   {
     id: "seed-5",
@@ -79,6 +83,8 @@ const products = [
     revenueAmount: 600, // $6
     revenueThreshold: THRESHOLD,
     stripeConnected: true,
+    featured: true,
+    randomSlot: true, // this slot pulls a random product from the queue when it bumps
   },
 ];
 

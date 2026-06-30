@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { replaceBumpedProduct } from "@/lib/queue";
 import Stripe from "stripe";
 
 interface Params {
@@ -56,12 +57,13 @@ export async function POST(req: NextRequest, { params }: Params) {
       }),
     ]);
 
-    // Bump off homepage once revenue threshold reached
+    // Bump off homepage once revenue threshold reached — frees its slot for the next product
     if (!updated.bumped && updated.revenueAmount >= updated.revenueThreshold) {
       await prisma.product.update({
         where: { id: product.id },
         data: { bumped: true, featured: false, bumpedAt: new Date() },
       });
+      await replaceBumpedProduct(updated.randomSlot);
     }
   }
 
