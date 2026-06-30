@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import Nav from "@/components/Nav";
 
@@ -13,17 +14,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <Nav />
-        {children}
-        <footer className="border-t border-gray-100 py-8 text-center text-sm text-gray-400 mt-16">
-          <p>
-            ProductBump — revenue verified via{" "}
-            <span className="font-semibold text-brand-500">Stripe</span>
-          </p>
-        </footer>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={inter.className}>
+          <Nav />
+          {children}
+          <footer className="border-t border-gray-100 py-8 text-center text-sm text-gray-400 mt-16">
+            <p>
+              ProductBump — revenue verified via{" "}
+              <span className="font-semibold text-brand-500">Stripe</span>
+            </p>
+          </footer>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -66,8 +67,22 @@ export default function Nav() {
             + Submit Product
           </Link>
 
-          {/* Avatar */}
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 ring-2 ring-white shadow-sm" />
+          {/* Auth */}
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900">
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800">
+                Sign up
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
         </div>
       </div>
     </header>

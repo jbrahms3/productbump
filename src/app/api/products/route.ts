@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { fillOpenSlots } from "@/lib/queue";
 
@@ -20,6 +21,11 @@ async function uniqueSlug(base: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { name, tagline, description, websiteUrl, logoUrl, makerName, makerEmail, category } = body;
 
@@ -38,6 +44,7 @@ export async function POST(req: NextRequest) {
         logoUrl: logoUrl || null,
         makerName,
         makerEmail,
+        makerUserId: userId,
         category: category || "Other",
         slug,
         featured: false, // joins the queue; fillOpenSlots promotes it if a homepage slot is open

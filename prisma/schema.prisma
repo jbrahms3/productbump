@@ -16,6 +16,7 @@ model Product {
   logoUrl          String?
   makerName        String
   makerEmail       String
+  makerUserId      String?   // Clerk user id of the submitter
   slug             String    @unique
 
   // Stripe integration fields
