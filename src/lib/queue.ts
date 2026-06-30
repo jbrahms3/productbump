@@ -59,3 +59,12 @@ export async function replaceBumpedProduct(wasRandomSlot: boolean) {
   await fillSlot(wasRandomSlot);
   await ensureRandomSlot();
 }
+
+// 1-based position in the FIFO queue. Only meaningful for unfeatured, unbumped
+// products — the random slot can still pull anyone out of turn.
+export async function getQueuePosition(createdAt: Date): Promise<number> {
+  const ahead = await prisma.product.count({
+    where: { featured: false, bumped: false, createdAt: { lt: createdAt } },
+  });
+  return ahead + 1;
+}

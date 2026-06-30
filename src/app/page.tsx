@@ -46,6 +46,7 @@ export default async function HomePage() {
     revenueToday: todayMap[p.id] ?? 0,
     rankDelta: todayMap[p.id] ?? 0,
     randomSlot: p.randomSlot,
+    featured: p.featured,
   }));
 
   // Top movers = most revenue today

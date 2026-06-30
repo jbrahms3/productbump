@@ -31,8 +31,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  // New revenue — fires for both one-time purchases and subscription invoices
+  // New revenue — fires for both one-time purchases and subscription invoices.
+  // Only counts once the product is actually on the homepage — queued products
+  // don't accrue revenue yet.
   if (event.type === "charge.succeeded") {
+    if (!product.featured) return NextResponse.json({ received: true });
+
     const charge = event.data.object as Stripe.Charge;
     const amount = charge.amount_captured ?? charge.amount;
     if (amount <= 0) return NextResponse.json({ received: true });

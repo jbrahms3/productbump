@@ -9,7 +9,6 @@ export default async function BrowsePage() {
 
   const products = await prisma.product.findMany({
     where: { bumped: false },
-    orderBy: [{ revenueAmount: "desc" }],
   });
 
   const todayPayments = await prisma.payment.groupBy({
@@ -19,7 +18,17 @@ export default async function BrowsePage() {
   });
   const todayMap = Object.fromEntries(todayPayments.map((t) => [t.productId, t._sum.amount ?? 0]));
 
-  const enriched: EnrichedProduct[] = products.map((p) => ({
+  // Featured products rank by revenue; queued products rank by submission order (FIFO)
+  const featured = products
+    .filter((p) => p.featured)
+    .sort((a, b) => b.revenueAmount - a.revenueAmount);
+  const queued = products
+    .filter((p) => !p.featured)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  const ordered = [...featured, ...queued];
+
+  const enriched: EnrichedProduct[] = ordered.map((p, i) => ({
     id: p.id,
     name: p.name,
     tagline: p.tagline,
@@ -31,6 +40,9 @@ export default async function BrowsePage() {
     stripeConnected: p.stripeConnected,
     revenueToday: todayMap[p.id] ?? 0,
     rankDelta: todayMap[p.id] ?? 0,
+    featured: p.featured,
+    randomSlot: p.randomSlot,
+    queuePosition: p.featured ? undefined : i - featured.length + 1,
   }));
 
   return (

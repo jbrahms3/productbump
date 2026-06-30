@@ -14,6 +14,8 @@ export interface EnrichedProduct {
   revenueToday: number;
   rankDelta: number;
   randomSlot?: boolean;
+  featured: boolean;
+  queuePosition?: number;
 }
 
 const CATEGORY_STYLES: Record<string, string> = {
@@ -121,34 +123,47 @@ export default function ProductCard({ product, rank }: Props) {
 
         <p className="truncate text-sm text-gray-500">{product.tagline}</p>
 
-        {/* Progress bar */}
-        <div className="flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${progress}%`,
-                background: "linear-gradient(90deg, #fb923c, #f97316)",
-              }}
-            />
+        {product.featured ? (
+          /* Progress bar */
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${progress}%`,
+                  background: "linear-gradient(90deg, #fb923c, #f97316)",
+                }}
+              />
+            </div>
+            <span className="shrink-0 text-xs text-gray-400">
+              {formatCurrency(product.revenueAmount)} / {formatCurrency(product.revenueThreshold)}
+            </span>
+            <span className="shrink-0 text-xs font-semibold text-brand-500">
+              {pct}% to goal
+            </span>
           </div>
-          <span className="shrink-0 text-xs text-gray-400">
-            {formatCurrency(product.revenueAmount)} / {formatCurrency(product.revenueThreshold)}
-          </span>
-          <span className="shrink-0 text-xs font-semibold text-brand-500">
-            {pct}% to goal
-          </span>
-        </div>
+        ) : (
+          <p className="text-xs text-gray-400">
+            Not listed yet — revenue isn&apos;t tracked until it&apos;s on the homepage
+          </p>
+        )}
       </div>
 
-      {/* Revenue pill */}
-      <div className="hidden sm:flex shrink-0 flex-col items-center justify-center min-w-[3.5rem] px-2 rounded-xl border border-gray-200 bg-white py-2 gap-0.5 shadow-sm">
-        <svg className="h-4 w-4 text-brand-500" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M10 17a1 1 0 01-1-1V6.414L5.707 9.707a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 6.414V16a1 1 0 01-1 1z" clipRule="evenodd" />
-        </svg>
-        <span className="text-sm font-bold text-gray-800 leading-none">{formatCurrencyCompact(product.revenueAmount)}</span>
-        <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">raised</span>
-      </div>
+      {/* Revenue / queue pill */}
+      {product.featured ? (
+        <div className="hidden sm:flex shrink-0 flex-col items-center justify-center min-w-[3.5rem] px-2 rounded-xl border border-gray-200 bg-white py-2 gap-0.5 shadow-sm">
+          <svg className="h-4 w-4 text-brand-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 17a1 1 0 01-1-1V6.414L5.707 9.707a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0l5 5a1 1 0 01-1.414 1.414L11 6.414V16a1 1 0 01-1 1z" clipRule="evenodd" />
+          </svg>
+          <span className="text-sm font-bold text-gray-800 leading-none">{formatCurrencyCompact(product.revenueAmount)}</span>
+          <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">raised</span>
+        </div>
+      ) : (
+        <div className="hidden sm:flex shrink-0 flex-col items-center justify-center min-w-[3.5rem] px-2 rounded-xl border border-gray-200 bg-gray-50 py-2 gap-0.5">
+          <span className="text-sm font-bold text-gray-700 leading-none">#{product.queuePosition}</span>
+          <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wide">in queue</span>
+        </div>
+      )}
     </div>
   );
 }
