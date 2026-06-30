@@ -66,13 +66,15 @@ export default async function ProductPage({ params }: Props) {
   const embed = product.demoVideoUrl ? embedUrl(product.demoVideoUrl) : null;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
           ← Back to homepage
         </Link>
         {!product.bumped && <BumpButton productId={product.id} makerUserId={product.makerUserId} />}
       </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
 
       {/* Product info */}
       <div className="card overflow-hidden">
@@ -172,7 +174,7 @@ export default async function ProductPage({ params }: Props) {
       </div>
 
       {/* Revenue */}
-      <div className="card mt-6 overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="flex items-center justify-between p-6">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Total revenue</p>
@@ -229,6 +231,8 @@ export default async function ProductPage({ params }: Props) {
             </div>
           )}
         </div>
+      </div>
+
       </div>
 
       {/* Comments */}
