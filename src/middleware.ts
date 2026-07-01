@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedPage = createRouteMatcher(["/submit(.*)"]);
+const isProtectedPage = createRouteMatcher(["/submit(.*)", "/account(.*)"]);
 const isProtectedApi = createRouteMatcher([
   "/api/products",
   "/api/upload",

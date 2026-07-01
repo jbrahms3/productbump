@@ -81,7 +81,11 @@ export default function Nav() {
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <UserButton />
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Link label="My Products" href="/account" labelIcon={<span>🚀</span>} />
+              </UserButton.MenuItems>
+            </UserButton>
           </Show>
         </div>
       </div>
